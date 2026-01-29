@@ -134,7 +134,7 @@ export function Dashboard() {
           value={topics.length}
           subtitle={`${totalPartitions} 个分区`}
           icon={FolderTree}
-          trend={{ value: 12, up: true }}
+          trend={undefined}
           color="green"
           compact={compact}
         />
@@ -148,10 +148,10 @@ export function Dashboard() {
         />
         <StatCard
           title="消息吞吐"
-          value={`${((clusterStats?.messagesPerSec || 8542) / 1000).toFixed(1)}K`}
+          value={clusterStats?.messagesPerSec ? `${(clusterStats.messagesPerSec / 1000).toFixed(1)}K` : '0'}
           subtitle="条消息/秒"
           icon={Activity}
-          trend={{ value: 8.5, up: true }}
+          trend={undefined}
           color="orange"
           compact={compact}
         />
