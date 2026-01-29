@@ -115,18 +115,19 @@ npm run dev
 
 ## 📸 界面预览
 
-| 概览 | Topic 列表 |
+| 概览 | broker 列表 |
 |------|------------|
-| ![Dashboard](src/assets/image-20260129153411871.png) | ![Topics](src/assets/image-20260129153418726.png) |
+| ![Settings](src/assets/image-20260129153400267.png) | ![Dashboard](src/assets/image-20260129153411871.png) |
 
-| 消息查看 | 消费者组 |
+| topic 列表 | 消费者组 |
 |----------|----------|
-| ![Messages](src/assets/image-20260129153426268.png) | ![Consumers](src/assets/image-20260129153432329.png) |
+| ![Topics](src/assets/image-20260129153418726.png) | ![Messages](src/assets/image-20260129153426268.png) |
 
-| 发送消息 | 设置 |
+| 消息查看 | 生产消费模拟 |
 |----------|------|
-| ![Send](src/assets/image-20260129153442001.png) | ![Settings](src/assets/image-20260129153400267.png) |
+| ![Consumers](src/assets/image-20260129153432329.png) | ![Send](src/assets/image-20260129153442001.png) |  |
 
 ## 📄 License
 
-MIT
+Apache License 2.0
+
