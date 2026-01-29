@@ -1,0 +1,21 @@
+{
+  "name": "kafka-manager-backend",
+  "version": "1.0.0",
+  "description": "Kafka Manager 后端服务",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "kafkajs": "^2.2.4",
+    "cors": "^2.8.5",
+    "ws": "^8.14.2",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
