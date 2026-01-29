@@ -10,8 +10,22 @@ export * from '@/types/kafka';
 // Auth API
 // ----------------------------------------------------------------------
 export const authApi = USE_MOCK ? mockApi.authApi : {
-  login: realApi.login,
-  logout: realApi.logout,
+  login: async (username: string, password: string) => {
+    try {
+      const data = await realApi.login(username, password);
+      return { success: true, user: data.user };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  },
+  logout: async () => {
+    try {
+      await realApi.logout();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  },
   updateProfile: async (userId: string, data: any) => {
     try {
       const user = await realApi.updateProfile(data);
