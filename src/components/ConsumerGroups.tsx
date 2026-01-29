@@ -13,7 +13,7 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { consumerGroupApi } from '@/api/mockApi';
+import { consumerGroupApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { useApp } from '@/contexts/AppContext';
 import type { ConsumerGroup, Consumer } from '@/types/kafka';

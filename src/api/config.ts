@@ -5,7 +5,7 @@
  */
 
 // 是否使用 Mock 数据（开发时设为 true，对接后端时设为 false）
-export const USE_MOCK = true;
+export const USE_MOCK = false;
 
 // 后端 API 地址
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';

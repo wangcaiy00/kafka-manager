@@ -14,7 +14,7 @@ import {
   Hash,
   Loader2
 } from 'lucide-react';
-import { topicApi, messageApi } from '@/api/mockApi';
+import { topicApi, messageApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { useApp } from '@/contexts/AppContext';
 import type { Topic, Message } from '@/types/kafka';

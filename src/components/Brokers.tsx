@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Server, Activity, HardDrive, ArrowDownToLine, ArrowUpFromLine, Cpu, Wifi, Loader2 } from 'lucide-react';
-import { brokerApi } from '@/api/mockApi';
+import { brokerApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { useApp } from '@/contexts/AppContext';
 import type { Broker } from '@/types/kafka';

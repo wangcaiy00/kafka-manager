@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, Notification, Settings, Cluster } from '@/types/kafka';
-import { authApi, clusterApi, notificationApi } from '@/api/mockApi';
+import { authApi, clusterApi, notificationApi } from '@/api';
 
 // 默认设置
 const defaultSettings: Settings = {

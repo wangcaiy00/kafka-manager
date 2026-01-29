@@ -12,7 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { brokerApi, topicApi, consumerGroupApi, clusterApi, chartApi } from '@/api/mockApi';
+import { brokerApi, topicApi, consumerGroupApi, clusterApi, chartApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { useApp } from '@/contexts/AppContext';
 import type { Broker, Topic, ConsumerGroup, ChartDataPoint } from '@/types/kafka';

@@ -14,7 +14,7 @@ import {
   Clock,
   Loader2
 } from 'lucide-react';
-import { topicApi } from '@/api/mockApi';
+import { topicApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { useApp } from '@/contexts/AppContext';
 import type { Topic, Partition } from '@/types/kafka';

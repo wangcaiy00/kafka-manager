@@ -18,7 +18,7 @@ import {
   Zap,
   Activity
 } from 'lucide-react';
-import { topicApi, messageApi } from '@/api/mockApi';
+import { topicApi, messageApi } from '@/api';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/utils/cn';
 import type { Topic, ProducerMessage, ConsumeRecord } from '@/types/kafka';

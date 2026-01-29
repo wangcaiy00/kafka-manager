@@ -18,13 +18,23 @@ class KafkaService {
   async connect() {
     const brokers = (process.env.KAFKA_BROKERS || 'localhost:9092').split(',');
     
-    this.kafka = new Kafka({
+    const kafkaConfig = {
       clientId: process.env.KAFKA_CLIENT_ID || 'kafka-manager',
       brokers,
       connectionTimeout: parseInt(process.env.KAFKA_CONNECTION_TIMEOUT) || 10000,
       requestTimeout: parseInt(process.env.KAFKA_REQUEST_TIMEOUT) || 30000,
       logLevel: logLevel.WARN,
-    });
+    };
+
+    if (process.env.KAFKA_SASL_MECHANISM && process.env.KAFKA_SASL_USERNAME && process.env.KAFKA_SASL_PASSWORD) {
+      kafkaConfig.sasl = {
+        mechanism: process.env.KAFKA_SASL_MECHANISM,
+        username: process.env.KAFKA_SASL_USERNAME,
+        password: process.env.KAFKA_SASL_PASSWORD,
+      };
+    }
+
+    this.kafka = new Kafka(kafkaConfig);
 
     this.admin = this.kafka.admin();
     await this.admin.connect();
