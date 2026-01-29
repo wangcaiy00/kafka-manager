@@ -331,7 +331,7 @@ export const consumerGroupApi = {
 
 // ========== Message API ==========
 export const messageApi = {
-  getMessages: async (_topic: string, partition: number, offset?: number, limit: number = 20): Promise<Message[]> => {
+  getMessages: async (_topic: string, partition: number, offset?: number, limit: number = 20, _groupId?: string): Promise<Message[]> => {
     await delay(500);
     // 生成模拟消息
     const baseOffset = offset || 132025;
@@ -403,29 +403,37 @@ export const messageApi = {
 
 // ========== Chart Data API ==========
 export const chartApi = {
-  getChartData: async (hours: number = 24): Promise<ChartDataPoint[]> => {
+  getChartData: async (): Promise<ChartDataPoint[]> => {
     await delay(300);
-    const points: ChartDataPoint[] = [];
     const now = new Date();
+    const data: ChartDataPoint[] = [];
     
-    for (let i = hours - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 3600000);
-      const hour = time.getHours();
-      
-      // 模拟日间流量高峰
-      const multiplier = hour >= 8 && hour <= 20 ? 1 + (1 - Math.abs(hour - 14) / 6) * 0.5 : 0.6;
-      
-      points.push({
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        messagesIn: fluctuate(Math.floor(5000 * multiplier), 20),
-        messagesOut: fluctuate(Math.floor(4500 * multiplier), 20),
-        bytesIn: fluctuate(Math.floor(50000 * multiplier), 20),
-        bytesOut: fluctuate(Math.floor(45000 * multiplier), 20),
+    for (let i = 20; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60000);
+      data.push({
+        time: time.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        messagesIn: Math.floor(Math.random() * 5000) + 1000,
+        messagesOut: Math.floor(Math.random() * 4500) + 1000,
+        bytesIn: Math.floor(Math.random() * 1024 * 1024 * 5),
+        bytesOut: Math.floor(Math.random() * 1024 * 1024 * 4),
       });
     }
     
-    return points;
+    return data;
+  }
+};
+
+// ==================== 设置 API ====================
+export const settingsApi = {
+  getSettings: async (): Promise<Settings | null> => {
+    await delay(200);
+    const saved = localStorage.getItem('kafka_settings');
+    return saved ? JSON.parse(saved) : null;
   },
+  updateSettings: async (settings: Settings): Promise<void> => {
+    await delay(300);
+    localStorage.setItem('kafka_settings', JSON.stringify(settings));
+  }
 };
 
 // ========== Notification API ==========

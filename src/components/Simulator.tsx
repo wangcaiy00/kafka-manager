@@ -163,13 +163,58 @@ export function Simulator() {
 
   // 模板功能已移除
 
+  const consumerGroupId = useRef(`simulator-${Date.now()}`);
+  const isFetching = useRef(false);
+
   // 开始消费
   const startConsuming = () => {
     setIsConsuming(true);
+    let isFirstCall = true;
 
     consumeInterval.current = setInterval(async () => {
-      const record = await messageApi.consumeMessages(consumerForm.topic, consumerForm.partition);
-      setConsumedMessages(prev => [record, ...prev].slice(0, consumerForm.maxMessages));
+      if (isFetching.current) return;
+      isFetching.current = true;
+
+      try {
+        // First call uses the selected offset strategy (earliest/latest).
+        // Subsequent calls use 'latest' to continue from where we left off (relying on consumer group offset commit).
+        const offsetParam = isFirstCall ? consumerForm.fromOffset : 'latest';
+        
+        // @ts-ignore - getMessages signature updated but types might lag
+        const msgs = await messageApi.getMessages(
+          consumerForm.topic, 
+          consumerForm.partition, 
+          offsetParam, 
+          10,
+          consumerGroupId.current
+        );
+        
+        isFirstCall = false;
+
+        if (msgs && msgs.length > 0) {
+          const records: ConsumeRecord[] = msgs.map((m: any) => ({
+            id: `${m.topic}-${m.partition}-${m.offset}`,
+            topic: m.topic || consumerForm.topic,
+            partition: m.partition || consumerForm.partition,
+            offset: m.offset,
+            key: m.key,
+            value: m.value,
+            timestamp: m.timestamp,
+            headers: m.headers || {}
+          }));
+
+          setConsumedMessages(prev => {
+            // Simple deduplication based on offset
+            const newRecords = records.filter(r => !prev.some(p => p.offset === r.offset && p.partition === r.partition));
+            if (newRecords.length === 0) return prev;
+            return [...newRecords, ...prev].slice(0, consumerForm.maxMessages);
+          });
+        }
+      } catch (e) {
+        console.error("Consume error", e);
+      } finally {
+        isFetching.current = false;
+      }
     }, consumeSpeed);
   };
 

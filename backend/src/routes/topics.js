@@ -49,7 +49,11 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    const result = await KafkaService.createTopic(name, partitions, replicationFactor);
+    const result = await KafkaService.createTopic(
+      name, 
+      parseInt(partitions), 
+      parseInt(replicationFactor)
+    );
     res.json({
       success: true,
       data: result

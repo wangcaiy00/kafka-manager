@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, Notification, Settings, Cluster } from '@/types/kafka';
-import { authApi, clusterApi, notificationApi } from '@/api';
+import { authApi, clusterApi, notificationApi, settingsApi } from '@/api';
 
 // 默认设置
 const defaultSettings: Settings = {
@@ -78,22 +78,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notificationList, setNotificationList] = useState<Notification[]>([]);
 
   // 设置
-  const [settings, setSettings] = useState<Settings>(() => {
-    const saved = localStorage.getItem('kafka_settings');
-    if (!saved) return defaultSettings;
-    try {
-      const parsed = JSON.parse(saved);
-      return {
-        ...defaultSettings,
-        ...parsed,
-        notifications: { ...defaultSettings.notifications, ...parsed.notifications },
-        display: { ...defaultSettings.display, ...parsed.display },
-        security: { ...defaultSettings.security, ...(parsed.security || {}) },
-      };
-    } catch (e) {
-      return defaultSettings;
-    }
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+
+  // 初始化加载设置
+  useEffect(() => {
+    const loadSettings = async () => {
+        try {
+            const remoteSettings = await settingsApi.getSettings();
+            if (remoteSettings) {
+                setSettings(prev => ({
+                    ...prev,
+                    ...remoteSettings,
+                    // Ensure nested objects are merged correctly
+                    notifications: { ...prev.notifications, ...remoteSettings.notifications },
+                    display: { ...prev.display, ...remoteSettings.display },
+                    security: { ...prev.security, ...(remoteSettings.security || {}) },
+                }));
+            } else {
+                // Fallback to local storage if API returns nothing (first run)
+                const saved = localStorage.getItem('kafka_settings');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        setSettings(prev => ({ ...prev, ...parsed }));
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load settings:', e);
+        }
+    };
+    loadSettings();
+  }, []);
 
   // 集群
   const [clusterList, setClusterList] = useState<Cluster[]>([]);
@@ -217,18 +235,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // 更新设置
-  const updateSettings = (newSettings: Partial<Settings>) => {
+  const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
     setSettings(prev => {
-      const updated = { 
-        ...prev, 
+      const updated = {
+        ...prev,
         ...newSettings,
-        notifications: { ...prev.notifications, ...newSettings.notifications },
-        display: { ...prev.display, ...newSettings.display },
+        notifications: {
+          ...prev.notifications,
+          ...(newSettings.notifications || {}),
+        },
+        display: {
+          ...prev.display,
+          ...(newSettings.display || {}),
+        },
+        security: {
+          ...prev.security,
+          ...(newSettings.security || {}),
+        },
       };
+      
+      // Save to API
+      settingsApi.updateSettings(updated).catch(console.error);
+      // Also save to local storage for backup/offline
       localStorage.setItem('kafka_settings', JSON.stringify(updated));
+      
       return updated;
     });
-  };
+  }, []);
 
   // 设置当前集群
   const setCurrentCluster = (cluster: Cluster) => {

@@ -10,9 +10,13 @@ const brokerRoutes = require('./brokers');
 const topicRoutes = require('./topics');
 const consumerGroupRoutes = require('./consumerGroups');
 const messageRoutes = require('./messages');
+const settingsRoutes = require('./settings');
 
 // 认证路由
 router.use('/auth', authRoutes);
+
+// 设置路由
+router.use('/settings', settingsRoutes);
 
 // 集群路由
 router.use('/cluster', clusterRoutes);

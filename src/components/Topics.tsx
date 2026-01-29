@@ -28,6 +28,15 @@ export function Topics() {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'healthy' | 'warning' | 'error'>('all');
   const [loadingPartitions, setLoadingPartitions] = useState(false);
+  
+  // 新建 Topic 状态
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    partitions: 1,
+    replicas: 1
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   const compact = settings.display.compactMode;
 
@@ -117,6 +126,66 @@ export function Topics() {
     }
   };
 
+  const handleCreateTopic = async () => {
+    if (!createForm.name) {
+      addNotification({
+        type: 'error',
+        title: '验证失败',
+        message: '请输入 Topic 名称',
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const result = await topicApi.createTopic(
+        createForm.name,
+        createForm.partitions,
+        createForm.replicas
+      );
+
+      // @ts-ignore
+      if (result.success) {
+        addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: `Topic "${createForm.name}" 创建成功`,
+        });
+        setIsCreateModalOpen(false);
+        setCreateForm({
+          name: '',
+          partitions: 1,
+          replicas: 1
+        });
+        
+        // Refresh list
+        setLoading(true);
+        try {
+          const data = await topicApi.getTopics();
+          setTopics(data);
+        } finally {
+          setLoading(false);
+        }
+
+      } else {
+        addNotification({
+          type: 'error',
+          title: '创建失败',
+          // @ts-ignore
+          message: result.error || '未知错误',
+        });
+      }
+    } catch (e) {
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: (e as Error).message,
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const statusCounts = {
     all: topics.length,
     healthy: topics.filter(t => t.status === 'healthy').length,
@@ -140,10 +209,7 @@ export function Topics() {
           <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-3")}>
             <h3 className="font-semibold text-slate-800">Topics 列表 ({filteredTopics.length})</h3>
             <button 
-              onClick={() => {
-                // TODO: 打开新建 Topic 弹窗
-                console.log('新建 Topic');
-              }}
+              onClick={() => setIsCreateModalOpen(true)}
               className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -397,6 +463,69 @@ export function Topics() {
           </div>
         )}
       </div>
+
+      {/* 新建 Topic 弹窗 */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-100 w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">新建 Topic</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">名称</label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  placeholder="例如: user-events"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">分区数</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={createForm.partitions}
+                    onChange={(e) => setCreateForm({ ...createForm, partitions: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">副本因子</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={createForm.replicas}
+                    onChange={(e) => setCreateForm({ ...createForm, replicas: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={isCreating}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreateTopic}
+                disabled={isCreating}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                创建
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export const authApi = USE_MOCK ? mockApi.authApi : {
 // Cluster API
 // ----------------------------------------------------------------------
 export const clusterApi = USE_MOCK ? mockApi.clusterApi : {
-  getClusters: mockApi.clusterApi.getClusters, 
+  getClusters: realApi.getClusters, 
   getClusterStats: async (clusterId: string) => {
     try {
       const metrics = await realApi.getClusterMetrics();
@@ -212,9 +212,9 @@ export const consumerGroupApi = USE_MOCK ? mockApi.consumerGroupApi : {
 // Message API
 // ----------------------------------------------------------------------
 export const messageApi = USE_MOCK ? mockApi.messageApi : {
-  getMessages: async (topic: string, partition: number, offset?: number, limit: number = 20) => {
+  getMessages: async (topic: string, partition: number, offset?: number | string, limit: number = 20, groupId?: string) => {
       try {
-        return await realApi.getMessages(topic, partition, offset?.toString(), limit);
+        return await realApi.getMessages(topic, partition, offset?.toString(), limit, groupId);
       } catch (e) {
         console.error(e);
         return [];
@@ -230,12 +230,65 @@ export const messageApi = USE_MOCK ? mockApi.messageApi : {
       // @ts-ignore
       return { status: 'sent', timestamp: new Date().toISOString() };
   },
-  consumeMessages: mockApi.messageApi.consumeMessages
+  consumeMessages: async (topic: string, partition: number) => {
+    // Fallback implementation for compatibility, but Simulator should prefer getMessages
+    try {
+      const messages = await realApi.getMessages(topic, partition, 'latest', 1);
+      if (messages.length > 0) {
+        const m = messages[0];
+        return {
+          id: `${m.topic}-${m.partition}-${m.offset}`,
+          topic: m.topic || topic,
+          partition: m.partition || partition,
+          offset: m.offset,
+          key: m.key,
+          value: m.value,
+          timestamp: m.timestamp,
+          headers: m.headers || {}
+        };
+      }
+      throw new Error("No messages available");
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  }
 };
 
 // ----------------------------------------------------------------------
 // Other APIs (Fallback to Mock)
 // ----------------------------------------------------------------------
-export const chartApi = mockApi.chartApi;
+export const chartApi = USE_MOCK ? mockApi.chartApi : {
+  getChartData: async () => {
+    try {
+      const metrics = await realApi.getClusterMetrics();
+      const now = new Date();
+      // Generate some fake historical data points based on current metrics because backend doesn't return history yet
+      const data = [];
+      for (let i = 20; i >= 0; i--) {
+         const time = new Date(now.getTime() - i * 60000);
+         data.push({
+             time: time.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+             messagesIn: metrics.messagesPerSec,
+             messagesOut: metrics.messagesPerSec, // assuming out ~= in
+             bytesIn: metrics.bytesInPerSec,
+             bytesOut: metrics.bytesOutPerSec
+         });
+      }
+      return data;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+};
+
+// ----------------------------------------------------------------------
+// Settings API
+// ----------------------------------------------------------------------
+export const settingsApi = USE_MOCK ? mockApi.settingsApi : {
+  getSettings: realApi.getSettings,
+  updateSettings: realApi.updateSettings
+};
 export const notificationApi = mockApi.notificationApi;
 export const templateApi = mockApi.templateApi;

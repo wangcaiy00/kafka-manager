@@ -53,6 +53,28 @@ export async function changePassword(oldPassword: string, newPassword: string): 
 
 // ==================== 集群 API ====================
 
+export async function getClusters(): Promise<Cluster[]> {
+  const response = await httpClient.get<any>('/cluster/info');
+  if (!response.success || !response.data) {
+    // If fail, return empty or throw? 
+    // For now, let's return a default one if connected, or empty.
+    // Actually, let's just return what we have formatted as a list.
+    throw new Error(response.message || '获取集群信息失败');
+  }
+  
+  // The backend returns a single cluster info object. We wrap it in an array.
+  const info = response.data;
+  return [{
+    id: 'prod', // Default ID as backend might not return one suitable for frontend ID
+    name: 'Production Cluster',
+    brokers: info.brokers || 0,
+    topics: info.topics || 0,
+    partitions: info.partitions || 0,
+    version: info.version || '3.0.0',
+    status: 'online' // Assume online if we got a response
+  }];
+}
+
 export async function getClusterMetrics(): Promise<DashboardMetrics> {
   const response = await httpClient.get<DashboardMetrics>('/cluster/metrics');
   if (!response.success || !response.data) {
@@ -67,6 +89,23 @@ export async function getClusterHealth(): Promise<{ connected: boolean }> {
     throw new Error(response.message || '获取健康状态失败');
   }
   return response.data;
+}
+
+// ==================== 设置 API ====================
+
+export async function getSettings(): Promise<Settings | null> {
+  const response = await httpClient.get<Record<string, any>>('/settings');
+  if (!response.success || !response.data) {
+    return null;
+  }
+  return response.data.app_settings || null;
+}
+
+export async function updateSettings(settings: Settings): Promise<void> {
+  const response = await httpClient.post('/settings', { app_settings: settings });
+  if (!response.success) {
+    throw new Error(response.message || '保存设置失败');
+  }
 }
 
 // ==================== Broker API ====================
@@ -147,13 +186,18 @@ export async function getMessages(
   topic: string, 
   partition: number = 0, 
   offset: string = 'earliest',
-  limit: number = 100
+  limit: number = 100,
+  groupId?: string
 ): Promise<Message[]> {
   const params = new URLSearchParams({
     partition: partition.toString(),
     offset,
     limit: limit.toString(),
   });
+  
+  if (groupId) {
+    params.append('groupId', groupId);
+  }
   
   const response = await httpClient.get<Message[]>(
     `/messages/${encodeURIComponent(topic)}?${params}`

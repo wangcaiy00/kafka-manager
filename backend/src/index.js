@@ -51,9 +51,14 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 const WS_PORT = process.env.WS_PORT || 3002;
 
+const { initDatabase } = require('./models');
+
 // 启动服务
 async function start() {
   try {
+    // 初始化数据库
+    await initDatabase();
+
     // 连接 Kafka
     console.log('正在连接 Kafka 集群...');
     await KafkaService.connect();

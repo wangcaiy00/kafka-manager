@@ -11,13 +11,14 @@ const KafkaService = require('../services/kafkaService');
 router.get('/:topic', async (req, res, next) => {
   try {
     const { topic } = req.params;
-    const { partition = 0, offset = 'earliest', limit = 100 } = req.query;
+    const { partition = 0, offset = 'earliest', limit = 100, groupId } = req.query;
 
     const messages = await KafkaService.getMessages(
       topic,
       parseInt(partition),
       offset,
-      parseInt(limit)
+      parseInt(limit),
+      groupId
     );
 
     res.json({

@@ -360,12 +360,19 @@ class KafkaService {
   /**
    * 获取消息
    */
-  async getMessages(topic, partition = 0, offset = 'earliest', limit = 100) {
+  async getMessages(topic, partition = 0, offset = 'earliest', limit = 100, groupId = null) {
+    const consumerGroupId = groupId || `kafka-manager-reader-${Date.now()}`;
     const consumer = this.kafka.consumer({ 
-      groupId: `kafka-manager-reader-${Date.now()}` 
+      groupId: consumerGroupId
     });
     
     await consumer.connect();
+    
+    // If we have a specific group ID (not random), we might want to respect committed offsets if offset is not provided?
+    // But for now, let's keep the logic simple.
+    // If offset is 'earliest', we force fromBeginning.
+    // If offset is 'latest' (or default), we don't force fromBeginning (so it uses committed or latest).
+    
     await consumer.subscribe({ topic, fromBeginning: offset === 'earliest' });
 
     const messages = [];
@@ -378,10 +385,16 @@ class KafkaService {
 
       try {
         await consumer.run({
-          eachMessage: async ({ topic, partition, message }) => {
+          eachMessage: async ({ topic, partition: msgPartition, message }) => {
+            // Filter by partition if specified? 
+            // The previous code ignored partition arg. Let's keep it that way for now to avoid breaking changes, 
+            // or maybe we should filter? 
+            // If the user asked for partition 0, they should probably only get partition 0.
+            // But let's stick to existing behavior unless we are sure.
+            
             messages.push({
               topic,
-              partition,
+              partition: msgPartition,
               offset: message.offset,
               timestamp: message.timestamp,
               key: message.key?.toString() || null,
